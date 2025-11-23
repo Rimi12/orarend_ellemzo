@@ -1,0 +1,5 @@
+{
+  "name": "KHlista",
+  "description": "Egy alkalmazás, amely egy Excel fájlból összesíti a tanári helyettesítéseket, figyelembe véve a párhuzamos órák miatti dupla bejegyzéseket. Töltse fel az Excel fájlt, és az alkalmazás automatikusan kiszámolja, hogy az egyes pedagógusok hányszor helyettesítettek.",
+  "requestFramePermissions": []
+}
