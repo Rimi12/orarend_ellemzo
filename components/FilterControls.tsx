@@ -34,21 +34,22 @@ const FilterControls: React.FC<FilterControlsProps> = ({
                 </div>
             </div>
             <div>
-                Helyettesítések száma (aktuális hónap)
-            </label>
-            <div className="mt-1">
-                <input
-                    type="number"
-                    id="count-filter"
-                    value={countFilter}
-                    onChange={(e) => onCountFilterChange(e.target.value)}
-                    min="0"
-                    placeholder="Pl. 5"
-                    disabled={disabled}
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"
-                />
+                <label htmlFor="count-filter" className="block text-sm font-medium text-gray-700">
+                    Helyettesítések száma (aktuális hónap)
+                </label>
+                <div className="mt-1">
+                    <input
+                        type="number"
+                        id="count-filter"
+                        value={countFilter}
+                        onChange={(e) => onCountFilterChange(e.target.value)}
+                        min="0"
+                        placeholder="Pl. 5"
+                        disabled={disabled}
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"
+                    />
+                </div>
             </div>
-        </div>
         </div >
     );
 };
