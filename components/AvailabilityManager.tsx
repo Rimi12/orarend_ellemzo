@@ -52,9 +52,35 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
         localStorage.setItem('khlista_exclusions', JSON.stringify(exclusions));
     }, [exclusions]);
 
-    // Initialize selected teachers with all teachers when schedules load
+    // Save selected teachers
     useEffect(() => {
-        if (schedules.length > 0 && selectedTeachers.length === 0) {
+        if (selectedTeachers.length > 0) {
+            localStorage.setItem('khlista_selected_teachers', JSON.stringify(selectedTeachers));
+        }
+    }, [selectedTeachers]);
+
+    // Initialize selected teachers
+    useEffect(() => {
+        if (schedules.length > 0) {
+            const savedSelection = localStorage.getItem('khlista_selected_teachers');
+            if (savedSelection) {
+                try {
+                    const parsed = JSON.parse(savedSelection);
+                    // Filter to ensure we only keep teachers that are actually in the current schedules
+                    const validSelection = parsed.filter((name: string) => schedules.some(s => s.name === name));
+                    
+                    // If we have a valid selection, use it. 
+                    // If the valid selection is empty (e.g. new file loaded with different teachers), 
+                    // fall back to selecting all.
+                    if (validSelection.length > 0) {
+                        setSelectedTeachers(validSelection);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Failed to load selected teachers", e);
+                }
+            }
+            // Default: select all
             setSelectedTeachers(schedules.map(t => t.name));
         }
     }, [schedules]);
