@@ -114,6 +114,13 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
             }
 
             if (isNewAssignment) {
+                // Check weekly quota
+                const currentCount = assignments.filter(a => a.teacherName === teacherName).length;
+                if (currentCount >= 3) {
+                    alert(`${ teacherName } már elérte a heti 3 alkalmas limitet!`);
+                    return;
+                }
+
                 const newAssignment: StandbyAssignment = {
                     id: `${ teacherName } -${ day } -${ period } -${ Date.now() } `,
                     teacherName,
