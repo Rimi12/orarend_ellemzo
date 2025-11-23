@@ -27,6 +27,12 @@ interface AvailabilityManagerProps {
 
 export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedules }) => {
     const [assignments, setAssignments] = useState<StandbyAssignment[]>([]);
+    const assignmentsRef = React.useRef(assignments);
+    
+    useEffect(() => {
+        assignmentsRef.current = assignments;
+    }, [assignments]);
+
     const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -86,7 +92,11 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
     }, [schedules]);
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
@@ -124,7 +134,9 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
             let teacherName = '';
             let isNewAssignment = false;
 
-            const existingAssignment = assignments.find(a => a.id === activeIdString);
+            // Use ref to get latest assignments for validation
+            const currentAssignments = assignmentsRef.current;
+            const existingAssignment = currentAssignments.find(a => a.id === activeIdString);
 
             if (existingAssignment) {
                 teacherName = existingAssignment.teacherName;
@@ -140,7 +152,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
             }
 
             // Prevent duplicate in same slot
-            if (assignments.some(a => a.teacherName === teacherName && a.day === day && a.period === period && a.id !== activeIdString)) {
+            if (currentAssignments.some(a => a.teacherName === teacherName && a.day === day && a.period === period && a.id !== activeIdString)) {
                  // If moving the same assignment to the same slot, it's fine (though no-op). 
                  // But if dragging a NEW one, or a DIFFERENT existing one, block it.
                  // The check `a.id !== activeIdString` ensures we don't block ourselves when moving (though moving to same slot is trivial).
@@ -150,7 +162,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
 
             if (isNewAssignment) {
                 // Check weekly quota
-                const currentCount = assignments.filter(a => a.teacherName === teacherName).length;
+                const currentCount = currentAssignments.filter(a => a.teacherName === teacherName).length;
                 console.log(`Checking quota for ${ teacherName }: current = ${ currentCount } `);
                 if (currentCount >= 3) {
                     alert(`${ teacherName } már elérte a heti 3 alkalmas limitet!`);
@@ -163,9 +175,9 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                     day,
                     period
                 };
-                setAssignments([...assignments, newAssignment]);
+                setAssignments(prev => [...prev, newAssignment]);
             } else {
-                setAssignments(assignments.map(a => {
+                setAssignments(prev => prev.map(a => {
                     if (a.id === activeIdString) {
                         return { ...a, day, period };
                     }
@@ -173,7 +185,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                 }));
             }
         } else if (overIdString === 'sidebar-droppable') {
-            setAssignments(assignments.filter(a => a.id !== activeIdString));
+            setAssignments(prev => prev.filter(a => a.id !== activeIdString));
         }
     };
 
@@ -252,7 +264,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                                        </div>
                                        <button
                                          onClick={() => setEditingTeacher(teacher.name)}
-                                         className="text-gray-400 hover:text-blue-600 p-1 ml-2 flex-shrink-0"
+                                         className="text-gray-500 hover:text-blue-600 p-1 ml-2 flex-shrink-0 min-w-[24px] flex items-center justify-center"
                                          title="Kizárások beállítása"
                                        >
                                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
