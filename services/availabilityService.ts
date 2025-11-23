@@ -1,5 +1,5 @@
-import { TeacherSchedule } from '../types';
-import { StandbyAssignment } from '../types';
+```typescript
+import { TeacherSchedule, StandbyAssignment, TeacherExclusion } from '../types';
 
 const DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek'];
 const MAX_DAILY_HOURS = 7;
@@ -15,7 +15,8 @@ interface Slot {
 export const generateStandbySchedule = (
     selectedTeachers: string[],
     schedules: TeacherSchedule[],
-    existingAssignments: StandbyAssignment[] = []
+    existingAssignments: StandbyAssignment[] = [],
+    exclusions: TeacherExclusion[] = []
 ): StandbyAssignment[] => {
     let newAssignments = [...existingAssignments];
 
@@ -84,6 +85,11 @@ export const generateStandbySchedule = (
             const lastLesson = teachingPeriods[teachingPeriods.length - 1];
 
             for (const period of relevantFreePeriods) {
+                // Check if excluded
+                if (exclusions.some(e => e.teacherName === teacherName && e.day === day && e.period === period)) {
+                    continue;
+                }
+
                 // Check if already assigned
                 if (newAssignments.some(a => a.teacherName === teacherName && a.day === day && a.period === period)) {
                     continue;
@@ -121,7 +127,7 @@ export const generateStandbySchedule = (
             if (getDailyHours(teacherName, slot.day) >= MAX_DAILY_HOURS) continue;
 
             newAssignments.push({
-                id: `${teacherName}-${slot.day}-${slot.period}-${Date.now()}-${Math.random()}`,
+                id: `${ teacherName } -${ slot.day } -${ slot.period } -${ Date.now() } -${ Math.random() } `,
                 teacherName,
                 day: slot.day,
                 period: slot.period

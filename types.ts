@@ -32,3 +32,9 @@ export interface StandbyAssignment {
   day: string;
   period: number;
 }
+
+export interface TeacherExclusion {
+  teacherName: string;
+  day: string;
+  period: number;
+}

@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import {
     DndContext,
@@ -14,10 +15,11 @@ import {
     sortableKeyboardCoordinates
 } from '@dnd-kit/sortable';
 
-import { TeacherSchedule, StandbyAssignment } from '../types';
+import { TeacherSchedule, StandbyAssignment, TeacherExclusion } from '../types';
 import { StandbyGrid } from './StandbyGrid';
 import { DraggableTeacher } from './DraggableTeacher';
 import { generateStandbySchedule } from '../services/availabilityService';
+import { ExclusionModal } from './ExclusionModal';
 
 interface AvailabilityManagerProps {
     schedules: TeacherSchedule[];
@@ -28,6 +30,27 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
     const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // Exclusion state
+    const [exclusions, setExclusions] = useState<TeacherExclusion[]>([]);
+    const [editingTeacher, setEditingTeacher] = useState<string | null>(null);
+
+    // Load saved exclusions
+    useEffect(() => {
+        try {
+            const savedExclusions = localStorage.getItem('khlista_exclusions');
+            if (savedExclusions) {
+                setExclusions(JSON.parse(savedExclusions));
+            }
+        } catch (e) {
+            console.error("Failed to load exclusions", e);
+        }
+    }, []);
+
+    // Save exclusions
+    useEffect(() => {
+        localStorage.setItem('khlista_exclusions', JSON.stringify(exclusions));
+    }, [exclusions]);
 
     // Initialize selected teachers with all teachers when schedules load
     useEffect(() => {
@@ -44,7 +67,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
     );
 
     const handleGenerate = () => {
-        const newAssignments = generateStandbySchedule(selectedTeachers, schedules, []);
+        const newAssignments = generateStandbySchedule(selectedTeachers, schedules, [], exclusions);
         setAssignments(newAssignments);
     };
 
@@ -66,16 +89,12 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
         const overIdString = over.id as string;
 
         // Check if dropped on a grid cell
-        // Grid cell IDs are formatted as "Day-Period" (e.g., "Hétfő-1")
         const isGridCell = overIdString.includes('-');
 
         if (isGridCell) {
             const [day, periodStr] = overIdString.split('-');
             const period = parseInt(periodStr, 10);
 
-            // Find the teacher name. 
-            // If dragging from sidebar, ID is the name.
-            // If dragging from grid, ID is the assignment ID.
             let teacherName = '';
             let isNewAssignment = false;
 
@@ -84,22 +103,25 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
             if (existingAssignment) {
                 teacherName = existingAssignment.teacherName;
             } else {
-                // Dragged from sidebar (assuming sidebar IDs are teacher names)
                 teacherName = activeIdString;
                 isNewAssignment = true;
             }
 
+            // Validate exclusion
+            if (exclusions.some(e => e.teacherName === teacherName && e.day === day && e.period === period)) {
+                alert(`${ teacherName } számára ez az időpont tiltva van!`);
+                return;
+            }
+
             if (isNewAssignment) {
-                // Create new assignment
                 const newAssignment: StandbyAssignment = {
-                    id: `${teacherName}-${day}-${period}-${Date.now()}`,
+                    id: `${ teacherName } -${ day } -${ period } -${ Date.now() } `,
                     teacherName,
                     day,
                     period
                 };
                 setAssignments([...assignments, newAssignment]);
             } else {
-                // Move existing assignment
                 setAssignments(assignments.map(a => {
                     if (a.id === activeIdString) {
                         return { ...a, day, period };
@@ -108,7 +130,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                 }));
             }
         } else if (overIdString === 'sidebar-droppable') {
-            // Dropped back to sidebar -> Remove assignment
             setAssignments(assignments.filter(a => a.id !== activeIdString));
         }
     };
@@ -124,6 +145,19 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
         return assignment ? assignment.teacherName : id;
     };
 
+    const handleToggleExclusion = (day: string, period: number) => {
+        if (!editingTeacher) return;
+
+        setExclusions(prev => {
+            const exists = prev.some(e => e.teacherName === editingTeacher && e.day === day && e.period === period);
+            if (exists) {
+                return prev.filter(e => !(e.teacherName === editingTeacher && e.day === day && e.period === period));
+            } else {
+                return [...prev, { teacherName: editingTeacher, day, period }];
+            }
+        });
+    };
+
     return (
         <DndContext
             sensors={sensors}
@@ -133,7 +167,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
         >
             <div className="flex h-[calc(100vh-200px)]">
                 {/* Sidebar */}
-                <div className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${isSidebarOpen ? 'w-64' : 'w-12'}`}>
+                <div className={`bg - white border - r border - gray - 200 transition - all duration - 300 flex flex - col ${ isSidebarOpen ? 'w-72' : 'w-12' } `}>
                     <div className="p-2 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                         {isSidebarOpen && <h3 className="font-semibold text-gray-700">Tanárok</h3>}
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1 hover:bg-gray-200 rounded">
@@ -161,16 +195,26 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                             <div className="space-y-1">
                                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Elérhető Tanárok</div>
                                 {schedules.map(teacher => (
-                                    <div key={teacher.name} className="flex items-center justify-between group">
-                                        <div className="flex items-center space-x-2">
+                                    <div key={teacher.name} className="flex items-center justify-between group p-1 hover:bg-gray-50 rounded">
+                                        <div className="flex items-center space-x-2 overflow-hidden">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedTeachers.includes(teacher.name)}
                                                 onChange={() => toggleTeacherSelection(teacher.name)}
-                                                className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 border-gray-300"
+                                                className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 border-gray-300 flex-shrink-0"
                                             />
                                             <DraggableTeacher id={teacher.name} name={teacher.name} />
                                         </div>
+                                        <button
+                                            onClick={() => setEditingTeacher(teacher.name)}
+                                            className="text-gray-400 hover:text-gray-600 p-1"
+                                            title="Kizárások beállítása"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -196,6 +240,17 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                     />
                 ) : null}
             </DragOverlay>
+
+            {editingTeacher && (
+                <ExclusionModal
+                    isOpen={!!editingTeacher}
+                    onClose={() => setEditingTeacher(null)}
+                    teacherName={editingTeacher}
+                    exclusions={exclusions.filter(e => e.teacherName === editingTeacher)}
+                    onToggleExclusion={handleToggleExclusion}
+                />
+            )}
         </DndContext>
     );
 };
+```
