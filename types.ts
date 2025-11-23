@@ -25,3 +25,10 @@ export interface TeacherSchedule {
     [day: string]: number[];
   };
 }
+
+export interface StandbyAssignment {
+  id: string;
+  teacherName: string;
+  day: string;
+  period: number;
+}

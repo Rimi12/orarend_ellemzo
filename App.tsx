@@ -12,9 +12,11 @@ import ActionButtons from './components/ActionButtons';
 import FreeTeacherSearch from './components/FreeTeacherSearch';
 import { TableIcon } from './components/icons/TableIcon';
 
+import { AvailabilityManager } from './components/AvailabilityManager';
+
 const App: React.FC = () => {
   // Tab state
-  const [activeTab, setActiveTab] = useState<'substitution' | 'schedule'>('substitution');
+  const [activeTab, setActiveTab] = useState<'substitution' | 'schedule' | 'availability'>('substitution');
 
   // Substitution state
   const [file, setFile] = useState<File | null>(null);
@@ -212,11 +214,20 @@ const App: React.FC = () => {
             >
               Lyukasóra Kereső
             </button>
+            <button
+              onClick={() => setActiveTab('availability')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'availability'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              Rendelkezésre állás
+            </button>
           </div>
         </div>
 
         <main className="space-y-8">
-          {activeTab === 'substitution' ? (
+          {activeTab === 'substitution' && (
             <>
               <InstructionCard />
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
@@ -273,7 +284,9 @@ const App: React.FC = () => {
                 </div>
               </div>
             </>
-          ) : (
+          )}
+
+          {activeTab === 'schedule' && (
             <>
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">1. Órarend PDF feltöltése</h2>
@@ -302,6 +315,10 @@ const App: React.FC = () => {
                 />
               )}
             </>
+          )}
+
+          {activeTab === 'availability' && (
+            <AvailabilityManager schedules={schedules} />
           )}
         </main>
         <footer className="text-center mt-12 text-gray-500 text-sm no-print">
