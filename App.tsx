@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { processExcelFile } from './services/excelProcessor';
-import { processPdfFile } from './services/pdfProcessor';
+import { processScheduleExcelFile } from './services/scheduleExcelProcessor';
+
 import type { TeacherSummary, SortKey, SortConfig, TeacherSchedule } from './types';
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
@@ -11,7 +12,6 @@ import FilterControls from './components/FilterControls';
 import ActionButtons from './components/ActionButtons';
 import FreeTeacherSearch from './components/FreeTeacherSearch';
 import { TableIcon } from './components/icons/TableIcon';
-
 import { AvailabilityManager } from './components/AvailabilityManager';
 
 const App: React.FC = () => {
@@ -89,20 +89,17 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [file]);
-
   const handleProcessPdf = useCallback(async () => {
     if (!pdfFile) {
-      setPdfError('Kérlek, válassz egy PDF fájlt a feldolgozáshoz.');
+      setPdfError('Kérlek, válassz egy Excel fájlt a feldolgozáshoz.');
       return;
     }
 
     setIsPdfLoading(true);
     setPdfError(null);
-    // setSchedules([]); // Don't clear immediately to avoid flickering if we want to keep old data on error? Actually better to clear.
-    // But we want to overwrite.
 
     try {
-      const result = await processPdfFile(pdfFile);
+      const result = await processScheduleExcelFile(pdfFile);
       setSchedules(result);
 
       // Save to local storage
@@ -114,11 +111,11 @@ const App: React.FC = () => {
       }
 
       if (result.length === 0) {
-        setPdfError('Nem sikerült adatokat kinyerni a PDF-ből. Ellenőrizd, hogy szöveges PDF-ről van-e szó.');
+        setPdfError('Nem sikerült adatokat kinyerni a fájlból. Ellenőrizd a formátumot.');
       }
     } catch (err) {
       console.error(err);
-      setPdfError('Hiba történt a PDF feldolgozása közben. Győződj meg róla, hogy nem sérült a fájl.');
+      setPdfError('Hiba történt a fájl feldolgozása közben. Győződj meg róla, hogy nem sérült a fájl.');
     } finally {
       setIsPdfLoading(false);
     }
@@ -289,15 +286,16 @@ const App: React.FC = () => {
           {activeTab === 'schedule' && (
             <>
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">1. Órarend PDF feltöltése</h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">1. Órarend Excel feltöltése</h2>
                 <p className="text-gray-600 mb-4 text-sm">
-                  Töltsd fel a Kréta rendszerből exportált, tanárok órarendjét tartalmazó PDF fájlt.
+                  Töltsd fel a Kréta rendszerből exportált <strong>OrarendExport.xlsx</strong> fájlt.
                 </p>
-                <PdfUpload
+                <FileUpload
                   onFileChange={handlePdfFileChange}
                   onProcess={handleProcessPdf}
                   isLoading={isPdfLoading}
                   selectedFile={pdfFile}
+                  accept=".xlsx, .xls"
                 />
               </div>
 
@@ -327,6 +325,6 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-};
 
+};
 export default App;
