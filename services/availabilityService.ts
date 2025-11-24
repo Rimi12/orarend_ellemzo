@@ -100,6 +100,12 @@ export const generateStandbySchedule = (
                     continue;
                 }
 
+                // Check slot capacity (max 3 teachers per slot)
+                const teachersInSlot = newAssignments.filter(a => a.day === day && a.period === period).length;
+                if (teachersInSlot >= 3) {
+                    continue;
+                }
+
                 // 1. Gap detection (Lyukasóra)
                 // A gap is a free period that has teaching before AND after it.
                 // But "before and after" might be separated by multiple gaps.
@@ -125,6 +131,10 @@ export const generateStandbySchedule = (
 
             // Re-check daily limit as we might have just added a slot to this day
             if (getDailyHours(teacherName, slot.day) >= MAX_DAILY_HOURS) continue;
+
+            // Re-check slot capacity as we might have just filled it with another teacher in this loop (unlikely in this single-teacher loop, but good for safety if logic changes)
+            const teachersInSlot = newAssignments.filter(a => a.day === slot.day && a.period === slot.period).length;
+            if (teachersInSlot >= 3) continue;
 
             newAssignments.push({
                 id: `${ teacherName } -${ slot.day } -${ slot.period } -${ Date.now() } -${ Math.random() } `,

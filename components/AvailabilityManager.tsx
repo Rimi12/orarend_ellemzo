@@ -153,11 +153,15 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
 
             // Prevent duplicate in same slot
             if (currentAssignments.some(a => a.teacherName === teacherName && a.day === day && a.period === period && a.id !== activeIdString)) {
-                 // If moving the same assignment to the same slot, it's fine (though no-op). 
-                 // But if dragging a NEW one, or a DIFFERENT existing one, block it.
-                 // The check `a.id !== activeIdString` ensures we don't block ourselves when moving (though moving to same slot is trivial).
-                 // But for new assignment, activeIdString is name, a.id is unique ID. They won't match. So it blocks.
                  return;
+            }
+
+            // Check slot capacity (max 3 teachers per slot)
+            // We count how many assignments are already in this target slot, EXCLUDING the one we are currently dragging (if it was already there)
+            const teachersInTargetSlot = currentAssignments.filter(a => a.day === day && a.period === period && a.id !== activeIdString).length;
+            if (teachersInTargetSlot >= 3) {
+                alert(`Ebben az időpontban(${ day } ${ period }.óra) már 3 tanár van beosztva!`);
+                return;
             }
 
             if (isNewAssignment) {
