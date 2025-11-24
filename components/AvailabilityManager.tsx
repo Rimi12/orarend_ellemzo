@@ -1,4 +1,3 @@
-```typescript
 import React, { useState, useEffect } from 'react';
 import {
     DndContext,
@@ -28,7 +27,7 @@ interface AvailabilityManagerProps {
 export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedules }) => {
     const [assignments, setAssignments] = useState<StandbyAssignment[]>([]);
     const assignmentsRef = React.useRef(assignments);
-    
+
     useEffect(() => {
         assignmentsRef.current = assignments;
     }, [assignments]);
@@ -74,7 +73,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
                     const parsed = JSON.parse(savedSelection);
                     // Filter to ensure we only keep teachers that are actually in the current schedules
                     const validSelection = parsed.filter((name: string) => schedules.some(s => s.name === name));
-                    
+
                     // If we have a valid selection, use it. 
                     // If the valid selection is empty (e.g. new file loaded with different teachers), 
                     // fall back to selecting all.
@@ -147,34 +146,34 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
 
             // Validate exclusion
             if (exclusions.some(e => e.teacherName === teacherName && e.day === day && e.period === period)) {
-                alert(`${ teacherName } számára ez az időpont tiltva van!`);
+                alert(teacherName + " számára ez az időpont tiltva van!");
                 return;
             }
 
             // Prevent duplicate in same slot
             if (currentAssignments.some(a => a.teacherName === teacherName && a.day === day && a.period === period && a.id !== activeIdString)) {
-                 return;
+                return;
             }
 
             // Check slot capacity (max 3 teachers per slot)
             // We count how many assignments are already in this target slot, EXCLUDING the one we are currently dragging (if it was already there)
             const teachersInTargetSlot = currentAssignments.filter(a => a.day === day && a.period === period && a.id !== activeIdString).length;
             if (teachersInTargetSlot >= 3) {
-                alert(`Ebben az időpontban(${ day } ${ period }.óra) már 3 tanár van beosztva!`);
+                alert("Ebben az időpontban (" + day + " " + period + ". óra) már 3 tanár van beosztva!");
                 return;
             }
 
             if (isNewAssignment) {
                 // Check weekly quota
                 const currentCount = currentAssignments.filter(a => a.teacherName === teacherName).length;
-                console.log(`Checking quota for ${ teacherName }: current = ${ currentCount } `);
+                console.log("Checking quota for " + teacherName + ": current = " + currentCount);
                 if (currentCount >= 3) {
-                    alert(`${ teacherName } már elérte a heti 3 alkalmas limitet!`);
+                    alert(teacherName + " már elérte a heti 3 alkalmas limitet!");
                     return;
                 }
 
                 const newAssignment: StandbyAssignment = {
-                    id: `${ teacherName } -${ day } -${ period } -${ Date.now() } `,
+                    id: teacherName + "-" + day + "-" + period + "-" + Date.now(),
                     teacherName,
                     day,
                     period
@@ -194,7 +193,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
     };
 
     const toggleTeacherSelection = (name: string) => {
-        setSelectedTeachers(prev => 
+        setSelectedTeachers(prev =>
             prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
         );
     };
@@ -218,77 +217,77 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
     };
 
     return (
-        <DndContext 
-            sensors={sensors} 
-            collisionDetection={closestCenter} 
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
             <div className="flex h-[calc(100vh-200px)]">
                 {/* Sidebar */}
-                <div className={`bg - white border - r border - gray - 200 transition - all duration - 300 flex flex - col ${ isSidebarOpen ? 'w-80' : 'w-12' } `}>
+                <div className={"bg-white border-r border-gray-200 transition-all duration-300 flex flex-col " + (isSidebarOpen ? 'w-80' : 'w-12')}>
                     <div className="p-2 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                         {isSidebarOpen && <h3 className="font-semibold text-gray-700">Tanárok</h3>}
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1 hover:bg-gray-200 rounded">
-                           {isSidebarOpen ? '◀' : '▶'}
+                            {isSidebarOpen ? '◀' : '▶'}
                         </button>
                     </div>
-                    
+
                     {isSidebarOpen && (
                         <div className="flex-1 overflow-y-auto p-2">
-                           <div className="mb-4 space-y-2">
-                               <button 
-                                 onClick={handleGenerate}
-                                 className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
-                               >
-                                 Automatikus Kiosztás
-                               </button>
-                               <button 
-                                 onClick={handleClear}
-                                 className="w-full py-2 px-4 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-medium"
-                               >
-                                 Törlés
-                               </button>
-                           </div>
+                            <div className="mb-4 space-y-2">
+                                <button
+                                    onClick={handleGenerate}
+                                    className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
+                                >
+                                    Automatikus Kiosztás
+                                </button>
+                                <button
+                                    onClick={handleClear}
+                                    className="w-full py-2 px-4 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-medium"
+                                >
+                                    Törlés
+                                </button>
+                            </div>
 
-                           <div className="space-y-1">
-                               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Elérhető Tanárok</div>
-                               {schedules.map(teacher => {
-                                   const currentCount = assignments.filter(a => a.teacherName === teacher.name).length;
-                                   const isQuotaReached = currentCount >= 3;
-                                   
-                                   return (
-                                       <div key={teacher.name} className="flex items-center justify-between group p-1 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200">
-                                           <div className="flex items-center space-x-2 overflow-hidden flex-1 min-w-0 mr-2">
-                                               <input 
-                                                 type="checkbox" 
-                                                 checked={selectedTeachers.includes(teacher.name)}
-                                                 onChange={() => toggleTeacherSelection(teacher.name)}
-                                                 className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 border-gray-300 flex-shrink-0"
-                                               />
-                                               <div className="truncate flex-1 min-w-0">
-                                                    <DraggableTeacher 
-                                                        id={teacher.name} 
-                                                        name={teacher.name} 
+                            <div className="space-y-1">
+                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Elérhető Tanárok</div>
+                                {schedules.map(teacher => {
+                                    const currentCount = assignments.filter(a => a.teacherName === teacher.name).length;
+                                    const isQuotaReached = currentCount >= 3;
+
+                                    return (
+                                        <div key={teacher.name} className="flex items-center justify-between group p-1 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200">
+                                            <div className="flex items-center space-x-2 overflow-hidden flex-1 min-w-0 mr-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTeachers.includes(teacher.name)}
+                                                    onChange={() => toggleTeacherSelection(teacher.name)}
+                                                    className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 border-gray-300 flex-shrink-0"
+                                                />
+                                                <div className="truncate flex-1 min-w-0">
+                                                    <DraggableTeacher
+                                                        id={teacher.name}
+                                                        name={teacher.name}
                                                         disabled={isQuotaReached}
                                                         count={currentCount}
                                                     />
-                                               </div>
-                                           </div>
-                                           <button
-                                             onClick={() => setEditingTeacher(teacher.name)}
-                                             className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md flex-shrink-0 border border-gray-200 bg-white shadow-sm transition-all"
-                                             title="Kizárások beállítása"
-                                           >
-                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                             </svg>
-                                           </button>
-                                       </div>
-                                   );
-                               })}
-                           </div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setEditingTeacher(teacher.name)}
+                                                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md flex-shrink-0 border border-gray-200 bg-white shadow-sm transition-all"
+                                                title="Kizárások beállítása"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -324,4 +323,3 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ schedu
         </DndContext>
     );
 };
-```

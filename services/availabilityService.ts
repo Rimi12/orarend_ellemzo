@@ -1,4 +1,3 @@
-```typescript
 import { TeacherSchedule, StandbyAssignment, TeacherExclusion } from '../types';
 
 const DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek'];
@@ -137,7 +136,7 @@ export const generateStandbySchedule = (
             if (teachersInSlot >= 3) continue;
 
             newAssignments.push({
-                id: `${ teacherName } -${ slot.day } -${ slot.period } -${ Date.now() } -${ Math.random() } `,
+                id: `${teacherName}-${slot.day}-${slot.period}-${Date.now()}-${Math.random()}`,
                 teacherName,
                 day: slot.day,
                 period: slot.period
